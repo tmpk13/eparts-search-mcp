@@ -1,0 +1,26 @@
+[tools]
+python = "3.13"
+uv = "latest"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+
+[tasks.install]
+description = "Install the project and dev dependencies"
+run = "uv pip install -e '.[dev]'"
+
+[tasks.test]
+description = "Run the test suite"
+run = "pytest -q"
+
+[tasks.lint]
+description = "Lint and format check"
+run = ["ruff check src tests", "ruff format --check src tests"]
+
+[tasks.fmt]
+description = "Format the source tree"
+run = "ruff format src tests"
+
+[tasks.serve]
+description = "Run the MCP server on stdio"
+run = "python -m digi_mouse_search"

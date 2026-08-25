@@ -1,0 +1,35 @@
+# Point DMS_CONFIG at a copy of this file.
+# Environment variables override anything set here.
+
+request_timeout_seconds = 30
+
+[cache]
+# path = "/var/lib/digi-mouse-search/cache.sqlite3"
+ttl_seconds = 3600
+
+[providers.digikey]
+client_id = ""
+client_secret = ""
+sandbox = false
+site = "US"
+currency = "USD"
+language = "en"
+
+[providers.digikey.rate_limit]
+per_second = 2
+per_minute = 60
+per_day = 1000
+# Requests allowed to arrive back to back before pacing applies.
+burst = 5
+# Longest a single call will wait for budget before reporting an error.
+max_wait_seconds = 10
+
+[providers.mouser]
+api_key = ""
+
+[providers.mouser.rate_limit]
+per_second = 1
+per_minute = 25
+per_day = 1000
+burst = 3
+max_wait_seconds = 10
