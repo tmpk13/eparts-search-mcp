@@ -255,3 +255,6 @@ strings rather than numbers.
 Parametric specifications have no shared vocabulary between the two
 distributors, so they are passed through as a name/value map rather than
 normalized into a common schema.
+
+
+## Claude Code was used in the making of this tool.
