@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from digi_mouse_search.config import load_config
+from eparts_search_mcp.config import load_config
 
 
 def test_defaults_are_conservative():
@@ -90,7 +90,7 @@ def test_environment_overrides_the_file(tmp_path, monkeypatch):
         encoding="ascii",
     )
     path.chmod(0o600)
-    monkeypatch.setenv("DMS_CONFIG", str(path))
+    monkeypatch.setenv("EPARTS_CONFIG", str(path))
     monkeypatch.setenv("MOUSER_API_KEY", "env-key")
     monkeypatch.setenv("MOUSER_RATE_PER_DAY", "99")
 
@@ -100,14 +100,14 @@ def test_environment_overrides_the_file(tmp_path, monkeypatch):
 
 
 def test_missing_config_file_is_an_error(monkeypatch, tmp_path):
-    monkeypatch.setenv("DMS_CONFIG", str(tmp_path / "absent.toml"))
+    monkeypatch.setenv("EPARTS_CONFIG", str(tmp_path / "absent.toml"))
     with pytest.raises(FileNotFoundError):
         load_config()
 
 
-def test_default_config_path_is_read_when_dms_config_is_unset(monkeypatch, tmp_path):
+def test_default_config_path_is_read_when_eparts_config_is_unset(monkeypatch, tmp_path):
     home = tmp_path / "cfg"
-    path = home / "digi-mouse-search" / "config.toml"
+    path = home / "eparts-search-mcp" / "config.toml"
     path.parent.mkdir(parents=True)
     path.write_text(
         """
@@ -127,7 +127,7 @@ def test_default_config_path_is_read_when_dms_config_is_unset(monkeypatch, tmp_p
 
 
 def test_missing_default_config_path_is_not_an_error(monkeypatch, tmp_path):
-    # An absent default file is fine; only an explicit DMS_CONFIG must exist.
+    # An absent default file is fine; only an explicit EPARTS_CONFIG must exist.
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "empty"))
     assert load_config().configured_sources() == []
 
@@ -136,7 +136,7 @@ def test_world_readable_config_file_warns(monkeypatch, tmp_path):
     path = tmp_path / "config.toml"
     path.write_text('[providers.digikey]\nclient_id = "x"\n', encoding="ascii")
     path.chmod(0o644)
-    monkeypatch.setenv("DMS_CONFIG", str(path))
+    monkeypatch.setenv("EPARTS_CONFIG", str(path))
     with pytest.warns(UserWarning, match="chmod 600"):
         load_config()
 
@@ -145,7 +145,7 @@ def test_locked_down_config_file_does_not_warn(monkeypatch, tmp_path, recwarn):
     path = tmp_path / "config.toml"
     path.write_text('[providers.digikey]\nclient_id = "x"\n', encoding="ascii")
     path.chmod(0o600)
-    monkeypatch.setenv("DMS_CONFIG", str(path))
+    monkeypatch.setenv("EPARTS_CONFIG", str(path))
     load_config()
     assert not recwarn.list
 

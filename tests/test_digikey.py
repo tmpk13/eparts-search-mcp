@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from digi_mouse_search.providers.base import ProviderError, absolute_url
+from eparts_search_mcp.providers.base import ProviderError, absolute_url
 
 TOKEN_URL = "https://api.digikey.com/v1/oauth2/token"
 SEARCH_URL = "https://api.digikey.com/products/v4/search/keyword"

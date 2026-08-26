@@ -5,10 +5,10 @@ from __future__ import annotations
 import httpx
 import respx
 
-from digi_mouse_search.config import Config, DigiKeyConfig, MouserConfig
-from digi_mouse_search.models import Part, PriceBreak
-from digi_mouse_search.normalize import merge_parts, mpn_key
-from digi_mouse_search.service import SearchService, best_offer
+from eparts_search_mcp.config import Config, DigiKeyConfig, MouserConfig
+from eparts_search_mcp.models import Part, PriceBreak
+from eparts_search_mcp.normalize import merge_parts, mpn_key
+from eparts_search_mcp.service import SearchService, best_offer
 
 from .test_digikey import SAMPLE_PRODUCT, SEARCH_URL, TOKEN_URL
 from .test_mouser import KEYWORD_URL, SAMPLE_PART

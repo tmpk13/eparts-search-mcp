@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from digi_mouse_search.config import (
+from eparts_search_mcp.config import (
     Config,
     DigiKeyConfig,
     MouserConfig,
     RateLimitConfig,
 )
-from digi_mouse_search.service import SearchService
+from eparts_search_mcp.service import SearchService
 
 # Tests must never inherit a developer's real credentials or budget.
 UNLIMITED = RateLimitConfig(per_second=None, per_minute=None, per_day=None, burst=1)
@@ -17,7 +17,7 @@ UNLIMITED = RateLimitConfig(per_second=None, per_minute=None, per_day=None, burs
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch, tmp_path_factory):
     # Point the default config lookup at an empty dir so tests never inherit a
-    # developer's real ~/.config/digi-mouse-search/config.toml.
+    # developer's real ~/.config/eparts-search-mcp/config.toml.
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path_factory.mktemp("xdg_config")))
     for name in (
         "DIGIKEY_CLIENT_ID",
@@ -37,10 +37,10 @@ def clean_env(monkeypatch, tmp_path_factory):
         "MOUSER_RATE_PER_DAY",
         "MOUSER_RATE_BURST",
         "MOUSER_RATE_MAX_WAIT",
-        "DMS_CONFIG",
-        "DMS_CACHE_PATH",
-        "DMS_CACHE_TTL",
-        "DMS_REQUEST_TIMEOUT",
+        "EPARTS_CONFIG",
+        "EPARTS_CACHE_PATH",
+        "EPARTS_CACHE_TTL",
+        "EPARTS_REQUEST_TIMEOUT",
     ):
         monkeypatch.delenv(name, raising=False)
 

@@ -3,9 +3,9 @@
 Settings come from three layers, later layers winning:
 
 1. Built-in defaults (conservative, sized to the distributors' free tiers).
-2. A TOML file: the path in DMS_CONFIG, or, if that is unset, a default of
-   $XDG_CONFIG_HOME/digi-mouse-search/config.toml (i.e. usually
-   ~/.config/digi-mouse-search/config.toml). This is the intended home for
+2. A TOML file: the path in EPARTS_CONFIG, or, if that is unset, a default of
+   $XDG_CONFIG_HOME/eparts-search-mcp/config.toml (i.e. usually
+   ~/.config/eparts-search-mcp/config.toml). This is the intended home for
    credentials, keeping them out of the environment.
 3. Environment variables.
 
@@ -109,12 +109,12 @@ class Config:
 
 def _default_state_dir() -> Path:
     base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
-    return Path(base) / "digi-mouse-search"
+    return Path(base) / "eparts-search-mcp"
 
 
 def _default_config_path() -> Path:
     base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    return Path(base) / "digi-mouse-search" / "config.toml"
+    return Path(base) / "eparts-search-mcp" / "config.toml"
 
 
 class _Unset:
@@ -234,7 +234,7 @@ def _warn_if_world_readable(path: Path) -> None:
 
 
 def _load_toml(path_hint: str | None) -> dict[str, Any]:
-    raw_path = path_hint or _optional(_env_str("DMS_CONFIG"))
+    raw_path = path_hint or _optional(_env_str("EPARTS_CONFIG"))
     if raw_path:
         # An explicitly named file must exist: a typo should fail loudly rather
         # than silently fall back to defaults.
@@ -286,12 +286,12 @@ def load_config(config_path: str | None = None) -> Config:
         ),
     )
 
-    cache_path = _apply(None, cache_table.get("path", _UNSET), _env_str("DMS_CACHE_PATH"))
+    cache_path = _apply(None, cache_table.get("path", _UNSET), _env_str("EPARTS_CACHE_PATH"))
     cache_ttl = _apply(
-        DEFAULT_CACHE_TTL, cache_table.get("ttl_seconds", _UNSET), _env_int("DMS_CACHE_TTL")
+        DEFAULT_CACHE_TTL, cache_table.get("ttl_seconds", _UNSET), _env_int("EPARTS_CACHE_TTL")
     )
     timeout = _apply(
-        30.0, doc.get("request_timeout_seconds", _UNSET), _env_float("DMS_REQUEST_TIMEOUT")
+        30.0, doc.get("request_timeout_seconds", _UNSET), _env_float("EPARTS_REQUEST_TIMEOUT")
     )
 
     base = Config(digikey=digikey, mouser=mouser)

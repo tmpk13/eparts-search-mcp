@@ -1,4 +1,4 @@
-# digi-mouse-search
+# eparts-search-mcp
 
 An MCP server that searches electronic components across DigiKey and Mouser.
 Each distributor can be queried on its own or both together, with offers for
@@ -32,7 +32,7 @@ uv tool install .
 ```
 
 `mise run install-tool` does the same, and `mise run uninstall-tool` removes
-it. After installing, `digi-mouse-search` runs the server on stdio from any
+it. After installing, `eparts-search-mcp` runs the server on stdio from any
 directory, reading credentials from the XDG config file described below.
 Nothing outside `~/.local` and `~/.config` is touched, so no privileged
 install step is needed.
@@ -55,11 +55,11 @@ mise run test
 
 Credentials can come from a config file or the environment. The file keeps
 them out of the environment and process listings; it is read by default from
-`~/.config/digi-mouse-search/config.toml` (or `$XDG_CONFIG_HOME` if set), so
-no `DMS_CONFIG` is needed:
+`~/.config/eparts-search-mcp/config.toml` (or `$XDG_CONFIG_HOME` if set), so
+no `EPARTS_CONFIG` is needed:
 
 ```toml
-# ~/.config/digi-mouse-search/config.toml
+# ~/.config/eparts-search-mcp/config.toml
 [providers.digikey]
 # DigiKey: register an app at developer.digikey.com with Product Information enabled
 client_id = "..."
@@ -74,7 +74,7 @@ Because the file holds secrets, keep it readable only by you. The server warns
 on startup if it is accessible to group or others:
 
 ```sh
-chmod 600 ~/.config/digi-mouse-search/config.toml
+chmod 600 ~/.config/eparts-search-mcp/config.toml
 ```
 
 The same values may instead be supplied through the environment, which
@@ -123,8 +123,8 @@ environment, since credentials come from the config file:
 ```json
 {
   "mcpServers": {
-    "digi-mouse-search": {
-      "command": "digi-mouse-search"
+    "eparts-search-mcp": {
+      "command": "eparts-search-mcp"
     }
   }
 }
@@ -136,8 +136,8 @@ Some clients launch servers with a bare environment that does not include
 ```json
 {
   "mcpServers": {
-    "digi-mouse-search": {
-      "command": "/home/you/.local/bin/digi-mouse-search"
+    "eparts-search-mcp": {
+      "command": "/home/you/.local/bin/eparts-search-mcp"
     }
   }
 }
@@ -149,9 +149,9 @@ through the client rather than the config file:
 ```json
 {
   "mcpServers": {
-    "digi-mouse-search": {
-      "command": "/path/to/digi-mouse-search/.venv/bin/python",
-      "args": ["-m", "digi_mouse_search"],
+    "eparts-search-mcp": {
+      "command": "/path/to/eparts-search-mcp/.venv/bin/python",
+      "args": ["-m", "eparts_search_mcp"],
       "env": {
         "DIGIKEY_CLIENT_ID": "...",
         "DIGIKEY_CLIENT_SECRET": "...",
@@ -191,8 +191,8 @@ export MOUSER_RATE_BURST=5
 export MOUSER_RATE_MAX_WAIT=30
 ```
 
-These also live in the config file (`~/.config/digi-mouse-search/config.toml`
-by default, or wherever `DMS_CONFIG` points), see `config.example.toml`. Environment
+These also live in the config file (`~/.config/eparts-search-mcp/config.toml`
+by default, or wherever `EPARTS_CONFIG` points), see `config.example.toml`. Environment
 variables override the file, so a client launch command can adjust a limit
 without editing configuration on disk.
 
@@ -203,10 +203,10 @@ what remains for the day.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `DMS_CONFIG` | `~/.config/digi-mouse-search/config.toml` | Path to a TOML configuration file; the default location is read when unset |
-| `DMS_CACHE_PATH` | `$XDG_STATE_HOME/digi-mouse-search/cache.sqlite3` | Cache and usage database |
-| `DMS_CACHE_TTL` | 3600 | Cached response lifetime in seconds |
-| `DMS_REQUEST_TIMEOUT` | 30 | HTTP timeout in seconds |
+| `EPARTS_CONFIG` | `~/.config/eparts-search-mcp/config.toml` | Path to a TOML configuration file; the default location is read when unset |
+| `EPARTS_CACHE_PATH` | `$XDG_STATE_HOME/eparts-search-mcp/cache.sqlite3` | Cache and usage database |
+| `EPARTS_CACHE_TTL` | 3600 | Cached response lifetime in seconds |
+| `EPARTS_REQUEST_TIMEOUT` | 30 | HTTP timeout in seconds |
 | `DIGIKEY_SANDBOX` | false | Use the DigiKey sandbox host, which returns synthetic data |
 | `DIGIKEY_LOCALE_SITE` | US | DigiKey site to search |
 | `DIGIKEY_LOCALE_CURRENCY` | USD | Currency for DigiKey pricing |
@@ -219,14 +219,14 @@ install owns nothing outside the home directory:
 
 | What | Where |
 | --- | --- |
-| Executable | `$XDG_BIN_HOME`, i.e. `~/.local/bin/digi-mouse-search` |
-| Tool environment | `~/.local/share/uv/tools/digi-mouse-search` |
-| Credentials and settings | `$XDG_CONFIG_HOME/digi-mouse-search/config.toml` |
-| Cache and daily usage counters | `$XDG_STATE_HOME/digi-mouse-search/cache.sqlite3` |
+| Executable | `$XDG_BIN_HOME`, i.e. `~/.local/bin/eparts-search-mcp` |
+| Tool environment | `~/.local/share/uv/tools/eparts-search-mcp` |
+| Credentials and settings | `$XDG_CONFIG_HOME/eparts-search-mcp/config.toml` |
+| Cache and daily usage counters | `$XDG_STATE_HOME/eparts-search-mcp/cache.sqlite3` |
 
 `XDG_CONFIG_HOME` and `XDG_STATE_HOME` default to `~/.config` and
-`~/.local/state` when unset. `DMS_CONFIG` and `DMS_CACHE_PATH` override the
-last two. Uninstalling with `uv tool uninstall digi-mouse-search` leaves the
+`~/.local/state` when unset. `EPARTS_CONFIG` and `EPARTS_CACHE_PATH` override the
+last two. Uninstalling with `uv tool uninstall eparts-search-mcp` leaves the
 config and cache in place; delete those directories to remove them too.
 
 ## Architecture

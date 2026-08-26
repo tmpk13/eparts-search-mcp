@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from digi_mouse_search import server
+from eparts_search_mcp import server
 
 from .test_digikey import SAMPLE_PRODUCT, SEARCH_URL, TOKEN_URL
 from .test_mouser import KEYWORD_URL, SAMPLE_PART

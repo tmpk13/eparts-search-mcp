@@ -1,4 +1,4 @@
-"""Entry point for `python -m digi_mouse_search`."""
+"""Entry point for `python -m eparts_search_mcp`."""
 
 from __future__ import annotations
 

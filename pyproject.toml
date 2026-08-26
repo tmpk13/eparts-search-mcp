@@ -1,5 +1,5 @@
 [project]
-name = "digi-mouse-search"
+name = "eparts-search-mcp"
 version = "0.1.0"
 description = "MCP server for searching electronic components across DigiKey and Mouser"
 readme = "README.md"
@@ -20,14 +20,14 @@ dev = [
 ]
 
 [project.scripts]
-digi-mouse-search = "digi_mouse_search.__main__:main"
+eparts-search-mcp = "eparts_search_mcp.__main__:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/digi_mouse_search"]
+packages = ["src/eparts_search_mcp"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

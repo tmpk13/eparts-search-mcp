@@ -17,7 +17,7 @@ MAX_PRICE_BREAKS = 6
 MAX_SPECS = 12
 
 mcp = MCPServer(
-    "digi-mouse-search",
+    "eparts-search-mcp",
     version=__version__,
     instructions=(
         "Search DigiKey and Mouser for electronic components. Both distributors "

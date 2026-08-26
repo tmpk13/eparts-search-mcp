@@ -5,9 +5,9 @@ import time
 
 import pytest
 
-from digi_mouse_search.cache import Cache
-from digi_mouse_search.config import RateLimitConfig
-from digi_mouse_search.ratelimit import RateLimiter, RateLimitExceeded
+from eparts_search_mcp.cache import Cache
+from eparts_search_mcp.config import RateLimitConfig
+from eparts_search_mcp.ratelimit import RateLimiter, RateLimitExceeded
 
 
 async def test_daily_limit_raises_rather_than_waiting():

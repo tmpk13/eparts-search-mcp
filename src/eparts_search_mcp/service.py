@@ -29,7 +29,7 @@ class SearchService:
         self.cache = Cache(self.config.cache_path, self.config.cache_ttl_seconds)
         self._client = httpx.AsyncClient(
             timeout=self.config.request_timeout_seconds,
-            headers={"User-Agent": "digi-mouse-search/0.1"},
+            headers={"User-Agent": "eparts-search-mcp/0.1"},
             follow_redirects=True,
         )
         self.limiters = {

@@ -6,7 +6,7 @@ import httpx
 import pytest
 import respx
 
-from digi_mouse_search.providers.mouser import parse_availability, parse_price
+from eparts_search_mcp.providers.mouser import parse_availability, parse_price
 
 KEYWORD_URL = "https://api.mouser.com/api/v2/search/keyword"
 PARTNUMBER_URL = "https://api.mouser.com/api/v2/search/partnumber"
@@ -103,7 +103,7 @@ async def test_errors_in_a_200_body_are_raised(service):
             },
         )
     )
-    from digi_mouse_search.providers.base import ProviderError
+    from eparts_search_mcp.providers.base import ProviderError
 
     with pytest.raises(ProviderError, match="API Key"):
         await service.providers["mouser"].search("LM317")

@@ -1,10 +1,10 @@
-# Point DMS_CONFIG at a copy of this file.
+# Point EPARTS_CONFIG at a copy of this file.
 # Environment variables override anything set here.
 
 request_timeout_seconds = 30
 
 [cache]
-# path = "/var/lib/digi-mouse-search/cache.sqlite3"
+# path = "/var/lib/eparts-search-mcp/cache.sqlite3"
 ttl_seconds = 3600
 
 [providers.digikey]
