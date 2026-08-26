@@ -29,14 +29,36 @@ mise run install
 mise run test
 ```
 
-Credentials come from the environment:
+Credentials can come from a config file or the environment. The file keeps
+them out of the environment and process listings; it is read by default from
+`~/.config/digikey-search-mcp/config.toml` (or `$XDG_CONFIG_HOME` if set), so
+no `DMS_CONFIG` is needed:
+
+```toml
+# ~/.config/digikey-search-mcp/config.toml
+[providers.digikey]
+# DigiKey: register an app at developer.digikey.com with Product Information enabled
+client_id = "..."
+client_secret = "..."
+
+[providers.mouser]
+# Mouser: request a Search API key from mouser.com/api-hub
+api_key = "..."
+```
+
+Because the file holds secrets, keep it readable only by you. The server warns
+on startup if it is accessible to group or others:
 
 ```sh
-# DigiKey: register an app at developer.digikey.com with Product Information enabled
+chmod 600 ~/.config/digikey-search-mcp/config.toml
+```
+
+The same values may instead be supplied through the environment, which
+overrides the file:
+
+```sh
 export DIGIKEY_CLIENT_ID=...
 export DIGIKEY_CLIENT_SECRET=...
-
-# Mouser: request a Search API key from mouser.com/api-hub
 export MOUSER_API_KEY=...
 ```
 
@@ -116,7 +138,8 @@ export MOUSER_RATE_BURST=5
 export MOUSER_RATE_MAX_WAIT=30
 ```
 
-Or point `DMS_CONFIG` at a file, see `config.example.toml`. Environment
+These also live in the config file (`~/.config/digikey-search-mcp/config.toml`
+by default, or wherever `DMS_CONFIG` points), see `config.example.toml`. Environment
 variables override the file, so a client launch command can adjust a limit
 without editing configuration on disk.
 
@@ -127,7 +150,7 @@ what remains for the day.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `DMS_CONFIG` | unset | Path to a TOML configuration file |
+| `DMS_CONFIG` | `~/.config/digikey-search-mcp/config.toml` | Path to a TOML configuration file; the default location is read when unset |
 | `DMS_CACHE_PATH` | `$XDG_STATE_HOME/digi-mouse-search/cache.sqlite3` | Cache and usage database |
 | `DMS_CACHE_TTL` | 3600 | Cached response lifetime in seconds |
 | `DMS_REQUEST_TIMEOUT` | 30 | HTTP timeout in seconds |

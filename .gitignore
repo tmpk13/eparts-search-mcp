@@ -219,3 +219,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local credential/config file (holds secrets; never commit)
+/config.toml

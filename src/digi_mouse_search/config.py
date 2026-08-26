@@ -3,7 +3,10 @@
 Settings come from three layers, later layers winning:
 
 1. Built-in defaults (conservative, sized to the distributors' free tiers).
-2. An optional TOML file pointed at by DMS_CONFIG.
+2. A TOML file: the path in DMS_CONFIG, or, if that is unset, a default of
+   $XDG_CONFIG_HOME/digikey-search-mcp/config.toml (i.e. usually
+   ~/.config/digikey-search-mcp/config.toml). This is the intended home for
+   credentials, keeping them out of the environment.
 3. Environment variables.
 
 Environment wins last so that an MCP client launching the server can override
@@ -13,7 +16,9 @@ a checked-in file without editing it.
 from __future__ import annotations
 
 import os
+import stat
 import tomllib
+import warnings
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
@@ -105,6 +110,11 @@ class Config:
 def _default_state_dir() -> Path:
     base = os.environ.get("XDG_STATE_HOME") or str(Path.home() / ".local" / "state")
     return Path(base) / "digi-mouse-search"
+
+
+def _default_config_path() -> Path:
+    base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    return Path(base) / "digikey-search-mcp" / "config.toml"
 
 
 class _Unset:
@@ -202,13 +212,41 @@ def _rate_limit_from(
     )
 
 
+def _warn_if_world_readable(path: Path) -> None:
+    """Warn (never fail) if a credential file is group- or world-accessible.
+
+    The config file is the intended home for secrets, so lax permissions are
+    worth flagging. POSIX only: the mode bits are meaningless on Windows.
+    Warnings go to stderr, which keeps them clear of the stdio MCP channel.
+    """
+    if os.name != "posix":
+        return
+    try:
+        mode = path.stat().st_mode
+    except OSError:
+        return
+    if mode & (stat.S_IRWXG | stat.S_IRWXO):
+        warnings.warn(
+            f"config file {path} is accessible to group or others; "
+            f"it may contain credentials. Restrict it with: chmod 600 {path}",
+            stacklevel=2,
+        )
+
+
 def _load_toml(path_hint: str | None) -> dict[str, Any]:
     raw_path = path_hint or _optional(_env_str("DMS_CONFIG"))
-    if not raw_path:
-        return {}
-    path = Path(str(raw_path)).expanduser()
-    if not path.is_file():
-        raise FileNotFoundError(f"config file not found: {path}")
+    if raw_path:
+        # An explicitly named file must exist: a typo should fail loudly rather
+        # than silently fall back to defaults.
+        path = Path(str(raw_path)).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(f"config file not found: {path}")
+    else:
+        # The default location is optional; its absence just means no file layer.
+        path = _default_config_path()
+        if not path.is_file():
+            return {}
+    _warn_if_world_readable(path)
     with path.open("rb") as handle:
         return tomllib.load(handle)
 
