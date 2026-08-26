@@ -24,3 +24,11 @@ run = "ruff format src tests"
 [tasks.serve]
 description = "Run the MCP server on stdio"
 run = "python -m digi_mouse_search"
+
+[tasks.install-tool]
+description = "Install digi-mouse-search onto PATH as a uv tool"
+run = "uv tool install --force ."
+
+[tasks.uninstall-tool]
+description = "Remove the installed digi-mouse-search tool"
+run = "uv tool uninstall digi-mouse-search"

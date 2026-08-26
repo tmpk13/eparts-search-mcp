@@ -15,7 +15,10 @@ UNLIMITED = RateLimitConfig(per_second=None, per_minute=None, per_day=None, burs
 
 
 @pytest.fixture(autouse=True)
-def clean_env(monkeypatch):
+def clean_env(monkeypatch, tmp_path_factory):
+    # Point the default config lookup at an empty dir so tests never inherit a
+    # developer's real ~/.config/digi-mouse-search/config.toml.
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path_factory.mktemp("xdg_config")))
     for name in (
         "DIGIKEY_CLIENT_ID",
         "DIGIKEY_CLIENT_SECRET",
