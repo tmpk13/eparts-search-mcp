@@ -21,7 +21,31 @@ by part number by default, with a `cheapest_at_quantity` comparison; pass
 If one distributor fails, is unconfigured, or is out of quota, the others
 still return results and the failure is reported under `errors`.
 
-## Setup
+## Installing
+
+To use the server from anywhere on the system, install it as a standalone
+tool. The executable lands in `~/.local/bin` (`$XDG_BIN_HOME` if set), with
+its dependencies in their own environment under `~/.local/share/uv/tools`:
+
+```sh
+uv tool install .
+```
+
+`mise run install-tool` does the same, and `mise run uninstall-tool` removes
+it. After installing, `digi-mouse-search` runs the server on stdio from any
+directory, reading credentials from the XDG config file described below.
+Nothing outside `~/.local` and `~/.config` is touched, so no privileged
+install step is needed.
+
+Make sure `~/.local/bin` is on `PATH`:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+## Development setup
+
+For working on the server rather than using it:
 
 ```sh
 mise install
@@ -31,11 +55,11 @@ mise run test
 
 Credentials can come from a config file or the environment. The file keeps
 them out of the environment and process listings; it is read by default from
-`~/.config/digikey-search-mcp/config.toml` (or `$XDG_CONFIG_HOME` if set), so
+`~/.config/digi-mouse-search/config.toml` (or `$XDG_CONFIG_HOME` if set), so
 no `DMS_CONFIG` is needed:
 
 ```toml
-# ~/.config/digikey-search-mcp/config.toml
+# ~/.config/digi-mouse-search/config.toml
 [providers.digikey]
 # DigiKey: register an app at developer.digikey.com with Product Information enabled
 client_id = "..."
@@ -50,7 +74,7 @@ Because the file holds secrets, keep it readable only by you. The server warns
 on startup if it is accessible to group or others:
 
 ```sh
-chmod 600 ~/.config/digikey-search-mcp/config.toml
+chmod 600 ~/.config/digi-mouse-search/config.toml
 ```
 
 The same values may instead be supplied through the environment, which
@@ -92,6 +116,35 @@ credentials work only against `sandbox-api.digikey.com`, which is what
 key, sent as a query parameter, and arrives by email.
 
 ### MCP client configuration
+
+Once installed as above, the command is on `PATH` and needs no path or
+environment, since credentials come from the config file:
+
+```json
+{
+  "mcpServers": {
+    "digi-mouse-search": {
+      "command": "digi-mouse-search"
+    }
+  }
+}
+```
+
+Some clients launch servers with a bare environment that does not include
+`~/.local/bin`; give the absolute path there instead:
+
+```json
+{
+  "mcpServers": {
+    "digi-mouse-search": {
+      "command": "/home/you/.local/bin/digi-mouse-search"
+    }
+  }
+}
+```
+
+To run from a source checkout without installing, or to pass credentials
+through the client rather than the config file:
 
 ```json
 {
@@ -138,7 +191,7 @@ export MOUSER_RATE_BURST=5
 export MOUSER_RATE_MAX_WAIT=30
 ```
 
-These also live in the config file (`~/.config/digikey-search-mcp/config.toml`
+These also live in the config file (`~/.config/digi-mouse-search/config.toml`
 by default, or wherever `DMS_CONFIG` points), see `config.example.toml`. Environment
 variables override the file, so a client launch command can adjust a limit
 without editing configuration on disk.
@@ -150,7 +203,7 @@ what remains for the day.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `DMS_CONFIG` | `~/.config/digikey-search-mcp/config.toml` | Path to a TOML configuration file; the default location is read when unset |
+| `DMS_CONFIG` | `~/.config/digi-mouse-search/config.toml` | Path to a TOML configuration file; the default location is read when unset |
 | `DMS_CACHE_PATH` | `$XDG_STATE_HOME/digi-mouse-search/cache.sqlite3` | Cache and usage database |
 | `DMS_CACHE_TTL` | 3600 | Cached response lifetime in seconds |
 | `DMS_REQUEST_TIMEOUT` | 30 | HTTP timeout in seconds |
@@ -158,6 +211,23 @@ what remains for the day.
 | `DIGIKEY_LOCALE_SITE` | US | DigiKey site to search |
 | `DIGIKEY_LOCALE_CURRENCY` | USD | Currency for DigiKey pricing |
 | `DIGIKEY_LOCALE_LANGUAGE` | en | Language for DigiKey results |
+
+### Files on disk
+
+Everything the server keeps lives under the XDG base directories, so an
+install owns nothing outside the home directory:
+
+| What | Where |
+| --- | --- |
+| Executable | `$XDG_BIN_HOME`, i.e. `~/.local/bin/digi-mouse-search` |
+| Tool environment | `~/.local/share/uv/tools/digi-mouse-search` |
+| Credentials and settings | `$XDG_CONFIG_HOME/digi-mouse-search/config.toml` |
+| Cache and daily usage counters | `$XDG_STATE_HOME/digi-mouse-search/cache.sqlite3` |
+
+`XDG_CONFIG_HOME` and `XDG_STATE_HOME` default to `~/.config` and
+`~/.local/state` when unset. `DMS_CONFIG` and `DMS_CACHE_PATH` override the
+last two. Uninstalling with `uv tool uninstall digi-mouse-search` leaves the
+config and cache in place; delete those directories to remove them too.
 
 ## Architecture
 

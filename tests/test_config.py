@@ -107,7 +107,7 @@ def test_missing_config_file_is_an_error(monkeypatch, tmp_path):
 
 def test_default_config_path_is_read_when_dms_config_is_unset(monkeypatch, tmp_path):
     home = tmp_path / "cfg"
-    path = home / "digikey-search-mcp" / "config.toml"
+    path = home / "digi-mouse-search" / "config.toml"
     path.parent.mkdir(parents=True)
     path.write_text(
         """
@@ -134,7 +134,7 @@ def test_missing_default_config_path_is_not_an_error(monkeypatch, tmp_path):
 
 def test_world_readable_config_file_warns(monkeypatch, tmp_path):
     path = tmp_path / "config.toml"
-    path.write_text("[providers.digikey]\nclient_id = \"x\"\n", encoding="ascii")
+    path.write_text('[providers.digikey]\nclient_id = "x"\n', encoding="ascii")
     path.chmod(0o644)
     monkeypatch.setenv("DMS_CONFIG", str(path))
     with pytest.warns(UserWarning, match="chmod 600"):
@@ -143,7 +143,7 @@ def test_world_readable_config_file_warns(monkeypatch, tmp_path):
 
 def test_locked_down_config_file_does_not_warn(monkeypatch, tmp_path, recwarn):
     path = tmp_path / "config.toml"
-    path.write_text("[providers.digikey]\nclient_id = \"x\"\n", encoding="ascii")
+    path.write_text('[providers.digikey]\nclient_id = "x"\n', encoding="ascii")
     path.chmod(0o600)
     monkeypatch.setenv("DMS_CONFIG", str(path))
     load_config()

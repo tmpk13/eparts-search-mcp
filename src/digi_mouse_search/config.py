@@ -4,8 +4,8 @@ Settings come from three layers, later layers winning:
 
 1. Built-in defaults (conservative, sized to the distributors' free tiers).
 2. A TOML file: the path in DMS_CONFIG, or, if that is unset, a default of
-   $XDG_CONFIG_HOME/digikey-search-mcp/config.toml (i.e. usually
-   ~/.config/digikey-search-mcp/config.toml). This is the intended home for
+   $XDG_CONFIG_HOME/digi-mouse-search/config.toml (i.e. usually
+   ~/.config/digi-mouse-search/config.toml). This is the intended home for
    credentials, keeping them out of the environment.
 3. Environment variables.
 
@@ -114,7 +114,7 @@ def _default_state_dir() -> Path:
 
 def _default_config_path() -> Path:
     base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    return Path(base) / "digikey-search-mcp" / "config.toml"
+    return Path(base) / "digi-mouse-search" / "config.toml"
 
 
 class _Unset:
