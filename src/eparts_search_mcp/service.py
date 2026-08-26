@@ -15,10 +15,10 @@ from .cache import Cache
 from .config import Config, load_config
 from .models import MergedPart, Part, SearchResult, SourceError
 from .normalize import merge_parts
-from .providers import DigiKeyProvider, MouserProvider, Provider, ProviderError
+from .providers import DigiKeyProvider, LCSCProvider, MouserProvider, Provider, ProviderError
 from .ratelimit import RateLimiter, RateLimitExceeded
 
-ALL_SOURCES = ("digikey", "mouser")
+ALL_SOURCES = ("digikey", "lcsc", "mouser")
 
 
 class SearchService:
@@ -34,6 +34,7 @@ class SearchService:
         )
         self.limiters = {
             "digikey": RateLimiter("digikey", self.config.digikey.rate_limit, self.cache),
+            "lcsc": RateLimiter("lcsc", self.config.lcsc.rate_limit, self.cache),
             "mouser": RateLimiter("mouser", self.config.mouser.rate_limit, self.cache),
         }
         self.providers: dict[str, Provider] = {
@@ -42,6 +43,13 @@ class SearchService:
                 self._client,
                 self.cache,
                 self.limiters["digikey"],
+                self.config.cache_ttl_seconds,
+            ),
+            "lcsc": LCSCProvider(
+                self.config.lcsc,
+                self._client,
+                self.cache,
+                self.limiters["lcsc"],
                 self.config.cache_ttl_seconds,
             ),
             "mouser": MouserProvider(
@@ -68,7 +76,8 @@ class SearchService:
                     SourceError(
                         source="*",
                         error="no source is configured; set DIGIKEY_CLIENT_ID with "
-                        "DIGIKEY_CLIENT_SECRET, or MOUSER_API_KEY",
+                        "DIGIKEY_CLIENT_SECRET, LCSC_KEY with LCSC_SECRET, or "
+                        "MOUSER_API_KEY",
                     )
                 )
             return usable, errors

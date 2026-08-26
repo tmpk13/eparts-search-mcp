@@ -11,69 +11,70 @@ from eparts_search_mcp.normalize import merge_parts, mpn_key
 from eparts_search_mcp.service import SearchService, best_offer
 
 from .test_digikey import SAMPLE_PRODUCT, SEARCH_URL, TOKEN_URL
+from .test_lcsc import mock_search as mock_lcsc_search
 from .test_mouser import KEYWORD_URL, SAMPLE_PART
 
 
-def mock_both_sources() -> None:
+def mock_every_source() -> None:
     respx.post(TOKEN_URL).mock(
         return_value=httpx.Response(200, json={"access_token": "tok", "expires_in": 600})
     )
     respx.post(SEARCH_URL).mock(
         return_value=httpx.Response(200, json={"Products": [SAMPLE_PRODUCT]})
     )
+    mock_lcsc_search()
     respx.post(KEYWORD_URL).mock(
         return_value=httpx.Response(200, json={"SearchResults": {"Parts": [SAMPLE_PART]}})
     )
 
 
 @respx.mock
-async def test_combined_search_queries_both_sources(service):
-    mock_both_sources()
+async def test_combined_search_queries_every_source(service):
+    mock_every_source()
     result = await service.search("LM317")
 
-    assert sorted(result.sources_searched) == ["digikey", "mouser"]
+    assert sorted(result.sources_searched) == ["digikey", "lcsc", "mouser"]
     assert result.errors == []
+    # All three carry the same part number, so it merges into one entry.
     assert len(result.parts) == 1
-    assert result.parts[0].sources == ["digikey", "mouser"]
+    assert result.parts[0].sources == ["digikey", "lcsc", "mouser"]
 
 
 @respx.mock
-async def test_single_source_search_leaves_the_other_untouched(service):
-    mock_both_sources()
+async def test_single_source_search_leaves_the_others_untouched(service):
+    mock_every_source()
     mouser_route = respx.post(KEYWORD_URL)
+    lcsc_route = mock_lcsc_search()
 
     result = await service.search("LM317", sources=["digikey"])
 
     assert result.sources_searched == ["digikey"]
     assert not mouser_route.called
+    assert not lcsc_route.called
     assert all(offer.source == "digikey" for part in result.parts for offer in part.offers)
 
 
 @respx.mock
 async def test_unmerged_search_keeps_sources_separate(service):
-    mock_both_sources()
+    mock_every_source()
     result = await service.search("LM317", merge=False)
 
-    assert set(result.by_source) == {"digikey", "mouser"}
+    assert set(result.by_source) == {"digikey", "lcsc", "mouser"}
     assert len(result.by_source["digikey"]) == 1
+    assert len(result.by_source["lcsc"]) == 1
     assert len(result.by_source["mouser"]) == 1
     assert result.parts == []
 
 
 @respx.mock
-async def test_one_source_failing_does_not_hide_the_other(service):
-    respx.post(TOKEN_URL).mock(
-        return_value=httpx.Response(200, json={"access_token": "tok", "expires_in": 600})
-    )
+async def test_one_source_failing_does_not_hide_the_others(service):
+    mock_every_source()
     respx.post(SEARCH_URL).mock(return_value=httpx.Response(503, text="unavailable"))
-    respx.post(KEYWORD_URL).mock(
-        return_value=httpx.Response(200, json={"SearchResults": {"Parts": [SAMPLE_PART]}})
-    )
 
     result = await service.search("LM317")
 
     assert len(result.parts) == 1
-    assert result.parts[0].sources == ["mouser"]
+    assert result.parts[0].sources == ["lcsc", "mouser"]
     assert [err.source for err in result.errors] == ["digikey"]
     assert "503" in result.errors[0].error
 

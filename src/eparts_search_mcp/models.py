@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-SourceName = Literal["digikey", "mouser"]
+SourceName = Literal["digikey", "lcsc", "mouser"]
 
 
 class PriceBreak(BaseModel):

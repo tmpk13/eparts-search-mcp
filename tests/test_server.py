@@ -9,6 +9,7 @@ import respx
 from eparts_search_mcp import server
 
 from .test_digikey import SAMPLE_PRODUCT, SEARCH_URL, TOKEN_URL
+from .test_lcsc import mock_search as mock_lcsc_search
 from .test_mouser import KEYWORD_URL, SAMPLE_PART
 
 
@@ -19,13 +20,14 @@ def use_test_service(service):
     server.set_service(None)
 
 
-def mock_both_sources() -> None:
+def mock_every_source() -> None:
     respx.post(TOKEN_URL).mock(
         return_value=httpx.Response(200, json={"access_token": "tok", "expires_in": 600})
     )
     respx.post(SEARCH_URL).mock(
         return_value=httpx.Response(200, json={"Products": [SAMPLE_PRODUCT]})
     )
+    mock_lcsc_search()
     respx.post(KEYWORD_URL).mock(
         return_value=httpx.Response(200, json={"SearchResults": {"Parts": [SAMPLE_PART]}})
     )
@@ -38,22 +40,33 @@ async def test_tools_are_registered():
 
 @respx.mock
 async def test_search_parts_merges_and_compares_prices():
-    mock_both_sources()
+    mock_every_source()
     payload = await server.search_parts("LM317", quantity=100)
 
     assert payload["count"] == 1
     part = payload["parts"][0]
-    assert part["available_from"] == ["digikey", "mouser"]
-    assert len(part["offers"]) == 2
-    # At 100 pieces Mouser quotes 0.61 against DigiKey's 0.68, so the comparison
-    # must name the cheaper source rather than the first one searched.
-    assert part["cheapest_at_quantity"]["source"] == "mouser"
-    assert part["cheapest_at_quantity"]["unit_price"] == 0.61
+    assert part["available_from"] == ["digikey", "lcsc", "mouser"]
+    assert len(part["offers"]) == 3
+    # At 100 pieces LCSC quotes 0.55 against Mouser's 0.61 and DigiKey's 0.68,
+    # so the comparison must name the cheapest source rather than the first
+    # one searched.
+    assert part["cheapest_at_quantity"]["source"] == "lcsc"
+    assert part["cheapest_at_quantity"]["unit_price"] == 0.55
+
+
+@respx.mock
+async def test_price_comparison_skips_offers_without_a_price_at_that_quantity():
+    mock_every_source()
+    # LCSC sells this part in tens, so at a quantity of one it has no
+    # applicable break and must not win the comparison by default.
+    payload = await server.search_parts("LM317", quantity=1)
+
+    assert payload["parts"][0]["cheapest_at_quantity"]["source"] == "mouser"
 
 
 @respx.mock
 async def test_search_parts_can_target_one_source():
-    mock_both_sources()
+    mock_every_source()
     payload = await server.search_parts("LM317", sources=["mouser"])
 
     assert payload["sources_searched"] == ["mouser"]
@@ -62,22 +75,17 @@ async def test_search_parts_can_target_one_source():
 
 @respx.mock
 async def test_search_parts_unmerged_groups_by_source():
-    mock_both_sources()
+    mock_every_source()
     payload = await server.search_parts("LM317", merge=False)
 
-    assert set(payload["by_source"]) == {"digikey", "mouser"}
+    assert set(payload["by_source"]) == {"digikey", "lcsc", "mouser"}
     assert "parts" not in payload
 
 
 @respx.mock
 async def test_search_parts_reports_a_failed_source():
-    respx.post(TOKEN_URL).mock(
-        return_value=httpx.Response(200, json={"access_token": "tok", "expires_in": 600})
-    )
+    mock_every_source()
     respx.post(SEARCH_URL).mock(return_value=httpx.Response(500, text="boom"))
-    respx.post(KEYWORD_URL).mock(
-        return_value=httpx.Response(200, json={"SearchResults": {"Parts": [SAMPLE_PART]}})
-    )
 
     payload = await server.search_parts("LM317")
     assert payload["count"] == 1
@@ -86,14 +94,14 @@ async def test_search_parts_reports_a_failed_source():
 
 @respx.mock
 async def test_specs_can_be_omitted():
-    mock_both_sources()
+    mock_every_source()
     payload = await server.search_parts("LM317", include_specs=False, sources=["digikey"])
     assert "specs" not in payload["parts"][0]["offers"][0]
 
 
 @respx.mock
 async def test_part_details_returns_each_source_that_knows_the_part():
-    mock_both_sources()
+    mock_every_source()
     respx.get("https://api.digikey.com/products/v4/search/LM317T%2FNOPB/productdetails").mock(
         return_value=httpx.Response(200, json={"Product": SAMPLE_PRODUCT})
     )
@@ -102,13 +110,13 @@ async def test_part_details_returns_each_source_that_knows_the_part():
     )
 
     payload = await server.part_details("LM317T/NOPB")
-    assert payload["count"] == 2
-    assert {entry["source"] for entry in payload["results"]} == {"digikey", "mouser"}
+    assert payload["count"] == 3
+    assert {entry["source"] for entry in payload["results"]} == {"digikey", "lcsc", "mouser"}
 
 
 async def test_source_status_reports_limits_and_budget():
     payload = await server.source_status()
-    assert payload["known_sources"] == ["digikey", "mouser"]
+    assert payload["known_sources"] == ["digikey", "lcsc", "mouser"]
     assert payload["sources"]["digikey"]["configured"] is True
     assert "remaining_today" in payload["sources"]["digikey"]["rate_limit"]
 

@@ -8,17 +8,31 @@ from eparts_search_mcp.config import load_config
 def test_defaults_are_conservative():
     config = load_config()
     assert config.digikey.rate_limit.per_day == 1000
+    assert config.lcsc.rate_limit.per_day == 1000
     assert config.mouser.rate_limit.per_day == 1000
+    # LCSC documents 60 keyword searches a minute; the default stays under it.
+    assert config.lcsc.rate_limit.per_minute == 45.0
     assert config.configured_sources() == []
 
 
 def test_credentials_come_from_the_environment(monkeypatch):
     monkeypatch.setenv("DIGIKEY_CLIENT_ID", "id")
     monkeypatch.setenv("DIGIKEY_CLIENT_SECRET", "secret")
+    monkeypatch.setenv("LCSC_KEY", "lcsc-id")
+    monkeypatch.setenv("LCSC_SECRET", "lcsc-secret")
     monkeypatch.setenv("MOUSER_API_KEY", "key")
 
     config = load_config()
-    assert config.configured_sources() == ["digikey", "mouser"]
+    assert config.configured_sources() == ["digikey", "lcsc", "mouser"]
+
+
+def test_lcsc_needs_both_halves_of_its_credential(monkeypatch):
+    # The key identifies the account and the secret signs the request; one
+    # without the other cannot produce a valid call.
+    monkeypatch.setenv("LCSC_KEY", "lcsc-id")
+    assert load_config().configured_sources() == []
+    monkeypatch.setenv("LCSC_SECRET", "lcsc-secret")
+    assert load_config().configured_sources() == ["lcsc"]
 
 
 def test_rate_limits_are_overridable_per_provider(monkeypatch):
@@ -62,6 +76,11 @@ def test_toml_file_configures_everything(tmp_path):
         per_day = 42
         per_minute = 6
 
+        [providers.lcsc]
+        key = "file-lcsc-id"
+        secret = "file-lcsc-secret"
+        currency = "EUR"
+
         [providers.mouser]
         api_key = "file-key"
         """,
@@ -73,6 +92,9 @@ def test_toml_file_configures_everything(tmp_path):
     assert config.digikey.client_id == "file-id"
     assert config.digikey.currency == "GBP"
     assert config.digikey.rate_limit.per_day == 42
+    assert config.lcsc.key == "file-lcsc-id"
+    assert config.lcsc.secret == "file-lcsc-secret"
+    assert config.lcsc.currency == "EUR"
     assert config.mouser.api_key == "file-key"
     assert config.cache_ttl_seconds == 120
 
@@ -155,3 +177,8 @@ def test_sandbox_switches_the_host(monkeypatch):
     assert load_config().digikey.base_url == "https://sandbox-api.digikey.com"
     monkeypatch.setenv("DIGIKEY_SANDBOX", "false")
     assert load_config().digikey.base_url == "https://api.digikey.com"
+
+    monkeypatch.setenv("LCSC_SANDBOX", "true")
+    assert load_config().lcsc.base_url == "https://fatapi.lcsc.com"
+    monkeypatch.setenv("LCSC_SANDBOX", "false")
+    assert load_config().lcsc.base_url == "https://api.lcsc.com"

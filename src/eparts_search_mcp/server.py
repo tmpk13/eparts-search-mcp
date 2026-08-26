@@ -20,10 +20,10 @@ mcp = MCPServer(
     "eparts-search-mcp",
     version=__version__,
     instructions=(
-        "Search DigiKey and Mouser for electronic components. Both distributors "
-        "are queried together by default so that prices can be compared; pass "
-        "sources to query one on its own. Request budget is limited, so prefer "
-        "one broad search over many narrow ones."
+        "Search DigiKey, LCSC and Mouser for electronic components. Every "
+        "configured distributor is queried together by default so that prices "
+        "can be compared; pass sources to query one on its own. Request budget "
+        "is limited, so prefer one broad search over many narrow ones."
     ),
 )
 
@@ -92,8 +92,8 @@ async def search_parts(
         list[str] | None,
         Field(
             description=(
-                "Which distributors to query: ['digikey'], ['mouser'], or both. "
-                "Omit to search every configured source."
+                "Which distributors to query: ['digikey'], ['lcsc'], ['mouser'], "
+                "or any combination. Omit to search every configured source."
             )
         ),
     ] = None,
@@ -114,7 +114,7 @@ async def search_parts(
     quantity: Annotated[int, Field(ge=1, description="Quantity used for the price comparison")] = 1,
     include_specs: Annotated[bool, Field(description="Include parametric specifications")] = True,
 ) -> dict[str, Any]:
-    """Search DigiKey and Mouser for electronic components.
+    """Search DigiKey, LCSC and Mouser for electronic components.
 
     Searches every configured distributor by default and merges offers for the
     same part number so prices can be compared. Pass `sources` to query one
@@ -156,7 +156,7 @@ async def part_details(
         Field(
             description=(
                 "Manufacturer part number, or a distributor part number such as "
-                "296-1234-ND for DigiKey or 511-LM317T for Mouser"
+                "296-1234-ND for DigiKey, C22452 for LCSC or 511-LM317T for Mouser"
             )
         ),
     ],

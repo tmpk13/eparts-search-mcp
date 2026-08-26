@@ -24,6 +24,23 @@ burst = 5
 # Longest a single call will wait for budget before reporting an error.
 max_wait_seconds = 10
 
+[providers.lcsc]
+# The key is the distributor id issued by LCSC; the secret signs each request
+# and is never transmitted.
+key = ""
+secret = ""
+# The test environment is a separate host serving simulated catalog data.
+sandbox = false
+currency = "USD"
+language = "EN"
+
+[providers.lcsc.rate_limit]
+per_second = 1
+per_minute = 45
+per_day = 1000
+burst = 5
+max_wait_seconds = 10
+
 [providers.mouser]
 api_key = ""
 

@@ -5,6 +5,7 @@ import pytest
 from eparts_search_mcp.config import (
     Config,
     DigiKeyConfig,
+    LCSCConfig,
     MouserConfig,
     RateLimitConfig,
 )
@@ -31,6 +32,16 @@ def clean_env(monkeypatch, tmp_path_factory):
         "DIGIKEY_RATE_PER_DAY",
         "DIGIKEY_RATE_BURST",
         "DIGIKEY_RATE_MAX_WAIT",
+        "LCSC_KEY",
+        "LCSC_SECRET",
+        "LCSC_SANDBOX",
+        "LCSC_CURRENCY",
+        "LCSC_LANGUAGE",
+        "LCSC_RATE_PER_SECOND",
+        "LCSC_RATE_PER_MINUTE",
+        "LCSC_RATE_PER_DAY",
+        "LCSC_RATE_BURST",
+        "LCSC_RATE_MAX_WAIT",
         "MOUSER_API_KEY",
         "MOUSER_RATE_PER_SECOND",
         "MOUSER_RATE_PER_MINUTE",
@@ -53,6 +64,7 @@ def config(tmp_path) -> Config:
             client_secret="test-secret",
             rate_limit=UNLIMITED,
         ),
+        lcsc=LCSCConfig(key="test-key-id", secret="test-secret", rate_limit=UNLIMITED),
         mouser=MouserConfig(api_key="test-key", rate_limit=UNLIMITED),
         cache_path=tmp_path / "cache.sqlite3",
         # Caching off by default so each test controls its own request count.

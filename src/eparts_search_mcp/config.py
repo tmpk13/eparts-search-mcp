@@ -52,10 +52,13 @@ class RateLimitConfig:
         }
 
 
-# Both distributors grant roughly 1000 calls/day on their standard free tier.
-# The per-minute values are deliberately below what either documents, since
-# tripping a distributor's own limiter is far more costly than waiting here.
+# Every distributor grants roughly 1000 calls/day on its standard tier. The
+# per-minute values are deliberately below what each documents, since tripping
+# a distributor's own limiter is far more costly than waiting here. LCSC
+# documents 60 keyword searches a minute and counts only successful calls
+# against the daily quota.
 DIGIKEY_DEFAULT_LIMITS = RateLimitConfig(per_second=2.0, per_minute=60.0, per_day=1000, burst=5)
+LCSC_DEFAULT_LIMITS = RateLimitConfig(per_second=1.0, per_minute=45.0, per_day=1000, burst=5)
 MOUSER_DEFAULT_LIMITS = RateLimitConfig(per_second=1.0, per_minute=25.0, per_day=1000, burst=3)
 
 
@@ -80,6 +83,30 @@ class DigiKeyConfig:
 
 
 @dataclass(frozen=True)
+class LCSCConfig:
+    key: str | None = None
+    secret: str | None = None
+    sandbox: bool = False
+    currency: str = "USD"
+    language: str = "EN"
+    rate_limit: RateLimitConfig = field(default_factory=lambda: LCSC_DEFAULT_LIMITS)
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.key and self.secret)
+
+    @property
+    def base_url(self) -> str:
+        """Host for the chosen environment.
+
+        The test environment is a separate host answering with simulated
+        catalog data, so it is selected by host rather than by a parameter.
+        """
+        host = "fatapi.lcsc.com" if self.sandbox else "api.lcsc.com"
+        return f"https://{host}"
+
+
+@dataclass(frozen=True)
 class MouserConfig:
     api_key: str | None = None
     rate_limit: RateLimitConfig = field(default_factory=lambda: MOUSER_DEFAULT_LIMITS)
@@ -93,6 +120,7 @@ class MouserConfig:
 @dataclass(frozen=True)
 class Config:
     digikey: DigiKeyConfig = field(default_factory=DigiKeyConfig)
+    lcsc: LCSCConfig = field(default_factory=LCSCConfig)
     mouser: MouserConfig = field(default_factory=MouserConfig)
     cache_path: Path = field(default_factory=lambda: _default_state_dir() / "cache.sqlite3")
     cache_ttl_seconds: int = DEFAULT_CACHE_TTL
@@ -102,6 +130,8 @@ class Config:
         names = []
         if self.digikey.configured:
             names.append("digikey")
+        if self.lcsc.configured:
+            names.append("lcsc")
         if self.mouser.configured:
             names.append("mouser")
         return names
@@ -278,6 +308,19 @@ def load_config(config_path: str | None = None) -> Config:
         ),
     )
 
+    lc_table = providers.get("lcsc", {})
+    lcsc = LCSCConfig(
+        key=_apply(None, lc_table.get("key", _UNSET), _env_str("LCSC_KEY")),
+        secret=_apply(None, lc_table.get("secret", _UNSET), _env_str("LCSC_SECRET")),
+        sandbox=bool(
+            _apply(False, lc_table.get("sandbox", _UNSET), _env_bool("LCSC_SANDBOX")) or False
+        ),
+        currency=_apply("USD", lc_table.get("currency", _UNSET), _env_str("LCSC_CURRENCY"))
+        or "USD",
+        language=_apply("EN", lc_table.get("language", _UNSET), _env_str("LCSC_LANGUAGE")) or "EN",
+        rate_limit=_rate_limit_from(LCSC_DEFAULT_LIMITS, lc_table.get("rate_limit", {}), "LCSC"),
+    )
+
     mo_table = providers.get("mouser", {})
     mouser = MouserConfig(
         api_key=_apply(None, mo_table.get("api_key", _UNSET), _env_str("MOUSER_API_KEY")),
@@ -294,7 +337,7 @@ def load_config(config_path: str | None = None) -> Config:
         30.0, doc.get("request_timeout_seconds", _UNSET), _env_float("EPARTS_REQUEST_TIMEOUT")
     )
 
-    base = Config(digikey=digikey, mouser=mouser)
+    base = Config(digikey=digikey, lcsc=lcsc, mouser=mouser)
     return replace(
         base,
         cache_path=Path(cache_path).expanduser() if cache_path else base.cache_path,
